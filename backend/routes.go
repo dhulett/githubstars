@@ -15,9 +15,10 @@ import (
 func PrepareRouter(router *mux.Router) {
 
 	router.HandleFunc("/{user}", getAllUserStarredRepositoriesAndTags).Methods("GET")
+	router.HandleFunc("/{user}/tags", getAllExistingTags).Methods("GET")
 	router.HandleFunc("/{user}/tags/{tags}", getAllRepositoriesWithTags).Methods("GET")
 	router.HandleFunc("/{user}/repos/{repo}", getRepositoryTags).Methods("GET")
-	router.HandleFunc("/{user}/repos/{repo}/{tags}", addRepositoryTag).Methods("POST")
+	router.HandleFunc("/{user}/repos/{repo}/{tags}", addRepositoryTag).Methods("PUT")
 	router.HandleFunc("/{user}/repos/{repo}/{tags}", removeRepositoryTag).Methods("DELETE")
 
 }
@@ -26,10 +27,15 @@ func getAllUserStarredRepositoriesAndTags(w http.ResponseWriter, r *http.Request
 	fmt.Println("GetAllUserStarredRepositoriesAndTags")
 
 	params := mux.Vars(r)
-	repositories := GetUserStarredRepos(params["user"])
-	json.NewEncoder(w).Encode(&repositories)
+	user := params["user"]
+	maxRepos := GetUserStarredReposCount(user)
+	repositories := GetUserStarredRepos(params["user"], maxRepos)
 
-	fmt.Println(repositories)
+	json.NewEncoder(w).Encode(&repositories)
+}
+
+func getAllExistingTags(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GetAllExistingTags")
 }
 
 func getAllRepositoriesWithTags(w http.ResponseWriter, r *http.Request) {
