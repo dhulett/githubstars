@@ -1,9 +1,10 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
-	"database/sql"
+
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -64,7 +65,7 @@ func (t *TagsStorage) GetRepoTags(repoID int64) []string {
 
 // GetReposByTagPattern Retrieves from the database the repositories which the tags match the mattern
 func (t *TagsStorage) GetReposByTagPattern(tagPattern string) []string {
-	repos, err := t.db.Query("SELECT DISTINCT repos.githubID FROM repos INNER JOIN taggedRepos AS tr ON tr.repoID = repos.id WHERE tr.tagID IN (SELECT id FROM tags WHERE tag LIKE ?)", tagPattern + "%")
+	repos, err := t.db.Query("SELECT DISTINCT repos.githubID FROM repos INNER JOIN taggedRepos AS tr ON tr.repoID = repos.id WHERE tr.tagID IN (SELECT id FROM tags WHERE tag LIKE ?)", tagPattern+"%")
 	if err != nil {
 		fmt.Println(err)
 		return []string{}
@@ -104,14 +105,10 @@ func (t *TagsStorage) DeleteTag(tag string) {
 	t.db.Exec("DELETE FROM tags WHERE tag LIKE ?", tag)
 }
 
-// NewTagsStorage return a database handler
-func NewTagsStorage() *TagsStorage {
-	return &TagsStorage{db: initDatabase()}
-}
-
-func initDatabase() *sql.DB {
-    database, _ := sql.Open("sqlite3", "./githubstars.db")
-    if _, err := database.Exec("CREATE TABLE IF NOT EXISTS tags (id INTEGER PRIMARY KEY, tag TEXT UNIQUE)"); err != nil {
+// GetTagsStorage initializes the database and returns the TagsStorage database handle
+func GetTagsStorage(dbPath string) *TagsStorage {
+	database, _ := sql.Open("sqlite3", dbPath)
+	if _, err := database.Exec("CREATE TABLE IF NOT EXISTS tags (id INTEGER PRIMARY KEY, tag TEXT UNIQUE)"); err != nil {
 		log.Fatal(err)
 	}
 	if _, err := database.Exec("CREATE TABLE IF NOT EXISTS repos (id INTEGER PRIMARY KEY, githubID TEXT UNIQUE)"); err != nil {
@@ -120,5 +117,5 @@ func initDatabase() *sql.DB {
 	if _, err := database.Exec("CREATE TABLE IF NOT EXISTS taggedRepos (tagID INTEGER, repoID INTEGER, UNIQUE(tagID, repoID), FOREIGN KEY(tagID) REFERENCES tags (id) ON DELETE CASCADE, FOREIGN KEY(repoID) REFERENCES repos (id) ON DELETE CASCADE)"); err != nil {
 		log.Fatal(err)
 	}
-    return database
+	return &TagsStorage{database}
 }

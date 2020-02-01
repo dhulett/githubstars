@@ -2,11 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/gorilla/mux"
 	"io/ioutil"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
 // AddRoutes configures the routes handlers in the router
@@ -55,20 +54,17 @@ func (h *handler) getAllRepositoriesWithMatchingTag(w http.ResponseWriter, r *ht
 	tag := params["tag"]
 	user := params["user"]
 
-	repos := h.tags.GetReposByTagPattern(tag)
-
 	maxRepos := GetUserStarredReposCount(user)
 	repositories := GetUserStarredRepos(user, maxRepos)
-	var reposWithTags []repositoryWithTags
+	repos := h.tags.GetReposByTagPattern(tag)
+	var filteredRepos []GithubRepository
 	for _, starredRepo := range repositories {
 		if !contains(repos, starredRepo.ID) {
 			continue
 		}
-		repoWithTags := getRepositoryWithTags(starredRepo, h.tags)
-		repoWithTags.SuggestedTags = suggestTags(starredRepo, h.tags)
-		reposWithTags = append(reposWithTags, repoWithTags)
+		filteredRepos = append(filteredRepos, starredRepo)
 	}
-
+	reposWithTags := getReposWithTags(filteredRepos, h.tags)
 	json.NewEncoder(w).Encode(reposWithTags)
 }
 
@@ -79,19 +75,22 @@ func (h *handler) deleteTagFromAllRepositories(w http.ResponseWriter, r *http.Re
 	h.tags.DeleteTag(tag)
 }
 
+func getReposWithTags(repositories []GithubRepository, tags *TagsStorage) []repositoryWithTags {
+	var reposWithTags []repositoryWithTags
+	for _, starredRepo := range repositories {
+		repoWithTags := getRepositoryWithTags(starredRepo, tags)
+		repoWithTags.SuggestedTags = suggestTags(starredRepo, repoWithTags.Tags, tags)
+		reposWithTags = append(reposWithTags, repoWithTags)
+	}
+	return reposWithTags
+}
+
 func (h *handler) getAllUserStarredRepositoriesAndTags(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	user := params["user"]
 	maxRepos := GetUserStarredReposCount(user)
 	repositories := GetUserStarredRepos(user, maxRepos)
-	var reposWithTags []repositoryWithTags
-
-	for _, starredRepo := range repositories {
-		repoWithTags := getRepositoryWithTags(starredRepo, h.tags)
-		repoWithTags.SuggestedTags = suggestTags(starredRepo, h.tags)
-		reposWithTags = append(reposWithTags, repoWithTags)
-	}
-
+	reposWithTags := getReposWithTags(repositories, h.tags)
 	json.NewEncoder(w).Encode(&reposWithTags)
 }
 
@@ -176,31 +175,31 @@ func suggestTags(sr GithubRepository, tagsStorage *TagsStorage) []string {
 	return tagsStorage.GetAllTags()
 }
 
-func convertLanguages(sr GithubRepository) []string {
+func convertLanguages(githubRepo GithubRepository) []string {
 	var langs []string
-	for _, lang := range sr.Languages.Nodes {
+	for _, lang := range githubRepo.Languages.Nodes {
 		langs = append(langs, lang.Name)
 	}
 	return langs
 }
 
-func getRepositoryWithTags(sr GithubRepository, tags *TagsStorage) repositoryWithTags {
+func getRepositoryWithTags(githubRepo GithubRepository, tags *TagsStorage) repositoryWithTags {
 	var repoWithTags repositoryWithTags
-	repoWithTags.ID = tags.GetRepoID(sr.ID)
-	repoWithTags.GithubID = sr.ID
-	repoWithTags.Name = sr.Name
-	repoWithTags.Description = sr.Description
-	repoWithTags.URL = sr.URL
-	repoWithTags.Language = convertLanguages(sr)
+	repoWithTags.ID = tags.GetRepoID(githubRepo.ID)
+	repoWithTags.GithubID = githubRepo.ID
+	repoWithTags.Name = githubRepo.Name
+	repoWithTags.Description = githubRepo.Description
+	repoWithTags.URL = githubRepo.URL
+	repoWithTags.Language = convertLanguages(githubRepo)
 	repoWithTags.Tags = tags.GetRepoTags(repoWithTags.ID)
 	return repoWithTags
 }
 
-func contains(slice []string, val string) (bool) {
-    for _, item := range slice {
-        if item == val {
-            return true
-        }
-    }
-    return false
+func contains(slice []string, val string) bool {
+	for _, item := range slice {
+		if item == val {
+			return true
+		}
+	}
+	return false
 }

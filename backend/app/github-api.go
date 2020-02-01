@@ -6,6 +6,8 @@ import (
 	"log"
 )
 
+const githubGraphQL = "https://api.github.com/graphql"
+
 // GithubRepository holds information about a starred repository
 type GithubRepository struct {
 	ID          string
@@ -32,7 +34,7 @@ type apiResponse struct {
 
 // GetUserStarredRepos returns all the starred repos for the user
 func GetUserStarredRepos(user string, maxRepos int) []GithubRepository {
-	client := graphql.NewClient("https://api.github.com/graphql")
+	client := graphql.NewClient(githubGraphQL)
 
 	req := getStarredReposRequest(user, maxRepos, 1)
 	req.Header.Add("Authorization", "Bearer 03b8cd62c73d8acad36e6a5f7ba5bc8c907c2eb7")
@@ -54,7 +56,7 @@ type apiCountResponse struct {
 
 // GetUserStarredReposCount returns the number of repos starred by the user
 func GetUserStarredReposCount(user string) int {
-	client := graphql.NewClient("https://api.github.com/graphql")
+	client := graphql.NewClient(githubGraphQL)
 
 	req := getStarredReposCountRequest(user)
 	req.Header.Add("Authorization", "Bearer 03b8cd62c73d8acad36e6a5f7ba5bc8c907c2eb7")
