@@ -17,4 +17,20 @@ FORMAT: 1A
 
 ## Repo [/repos/{id}]
 
-
+# [/]
+[GET]
+# [/tags]
+[GET]
+# [/tags/{tag}]
+[DELETE]
+# [/{user}/tags/{tag}]
+[GET]
+# [/{user}/repos]
+[GET]
+# [/{user}/repos/{repo}]
+[GET]
+# [/{user}/repos/{repo}/tags]
+[GET]
+[PUT]
+# [/{user}/repos/{repo}/tags/{tag}]
+[POST]

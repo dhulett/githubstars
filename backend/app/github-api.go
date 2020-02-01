@@ -15,7 +15,10 @@ type GithubRepository struct {
 	Description string
 	URL         string
 	Languages   struct {
-		Nodes []ProgrammingLanguage
+		Nodes   []ProgrammingLanguage
+	}
+	Owner       struct {
+		Login    string
 	}
 }
 
@@ -84,21 +87,21 @@ func getStarredReposCountRequest(user string) *graphql.Request {
 
 func getStarredReposRequest(user string, maxRepos int, maxLanguages int) *graphql.Request {
 	req := graphql.NewRequest(`query ($user: String!, $maxRepos: Int!, $maxLanguages: Int!) {
-		user(login:$user){
-			starredRepositories(first:$maxRepos){
+		user(login:$user) {
+			starredRepositories(first:$maxRepos) {
 				totalCount
-				nodes
-				{
+				nodes {
 					id
 					name
 					description
 					url
-					languages(first:$maxLanguages)
-					{
-						nodes
-						{
+					languages(first:$maxLanguages) {
+						nodes {
 							name
 						}
+					}
+					owner {
+           				login
 					}
 				}
 			}

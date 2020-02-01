@@ -14,10 +14,8 @@ COPY app/go.sum ./
 ENV GOOS=linux
 ENV GO111MODULE=on
 
-RUN go build
-
 EXPOSE 8000
 
-VOLUME [ "/go/githubstars/data/" ]
+VOLUME [ "/go/githubstars/" ]
 
-ENTRYPOINT [ "githubstars" ]
+CMD [ "go", "run", "." ]

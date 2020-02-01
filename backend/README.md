@@ -8,7 +8,6 @@ A server that exposes a REST API to allow the user to fetch information about re
 
 ## Getting Started
 
-
 ### Prerequisites
 
 + [Go](https://golang.org/) version 1.13 or above (Go Modules)
@@ -19,14 +18,14 @@ or
 + [Docker](https://www.docker.com/)
 
 ### Run with Go:
-```
-$ cd app
+```shell
+$ cd ./app
 $ go run .
 ```
 
 ### Run with docker:
-```
-$ docker run -v ./app/:/go/githubstars -p 8000:8000 --rm -it $(docker build -q ..)
+```shell
+$ docker run -v ./app/:/go/githubstars -p 8000:8000 --rm -it $(docker build -q .)
 ```
 
 ## Built With

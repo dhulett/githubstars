@@ -34,6 +34,7 @@ type repositoryWithTags struct {
 	GithubID      string
 	Name          string
 	Description   string
+	Owner		  string
 	URL           string
 	Language      []string
 	Tags          []string
@@ -186,6 +187,10 @@ func suggestTags(githubRepo GithubRepository, repoTags []string, tagsStorage *Ta
 		}
 	}
 
+	if !contains(suggestedTags, githubRepo.Owner.Login) && !contains(repoTags, githubRepo.Owner.Login) {
+		suggestedTags = append(suggestedTags, githubRepo.Owner.Login)
+	}
+
 	return suggestedTags
 }
 
@@ -202,6 +207,7 @@ func getRepositoryWithTags(githubRepo GithubRepository, tags *TagsStorage) repos
 	repoWithTags.ID = tags.GetRepoID(githubRepo.ID)
 	repoWithTags.GithubID = githubRepo.ID
 	repoWithTags.Name = githubRepo.Name
+	repoWithTags.Owner = githubRepo.Owner.Login
 	repoWithTags.Description = githubRepo.Description
 	repoWithTags.URL = githubRepo.URL
 	repoWithTags.Language = convertLanguages(githubRepo)
