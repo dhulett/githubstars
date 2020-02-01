@@ -171,8 +171,22 @@ func (h *handler) removeRepositoryTag(w http.ResponseWriter, r *http.Request) {
 	h.tags.RemoveRepoTag(repo, string(tag))
 }
 
-func suggestTags(sr GithubRepository, tagsStorage *TagsStorage) []string {
-	return tagsStorage.GetAllTags()
+func suggestTags(githubRepo GithubRepository, repoTags []string, tagsStorage *TagsStorage) []string {
+	var suggestedTags []string
+	languages := convertLanguages(githubRepo)
+	for _, lang := range languages {
+		if !contains(suggestedTags, lang) && !contains(repoTags, lang) {
+			suggestedTags = append(suggestedTags, lang)
+		}
+	}
+
+	for _, tag := range tagsStorage.GetAllTags() {
+		if !contains(suggestedTags, tag) && !contains(repoTags, tag) {
+			suggestedTags = append(suggestedTags, tag)
+		}
+	}
+
+	return suggestedTags
 }
 
 func convertLanguages(githubRepo GithubRepository) []string {
