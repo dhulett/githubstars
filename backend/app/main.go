@@ -8,6 +8,8 @@ import (
 
 func main() {
 	router := mux.NewRouter()
-	PrepareRouter(router)
+	tags := NewTagsStorage()
+	AddRoutes(router, tags)
+	AddMiddlewares(router)
 	log.Fatal(http.ListenAndServe(":8000", router))
 }

@@ -6,8 +6,8 @@ import (
 	"log"
 )
 
-// StarredRepository holds information about a starred repository
-type StarredRepository struct {
+// GithubRepository holds information about a starred repository
+type GithubRepository struct {
 	ID          string
 	Name        string
 	Description string
@@ -25,13 +25,13 @@ type ProgrammingLanguage struct {
 type apiResponse struct {
 	User struct {
 		StarredRepositories struct {
-			Nodes []StarredRepository
+			Nodes []GithubRepository
 		}
 	}
 }
 
 // GetUserStarredRepos returns all the starred repos for the user
-func GetUserStarredRepos(user string, maxRepos int) []StarredRepository {
+func GetUserStarredRepos(user string, maxRepos int) []GithubRepository {
 	client := graphql.NewClient("https://api.github.com/graphql")
 
 	req := getStarredReposRequest(user, maxRepos, 1)
