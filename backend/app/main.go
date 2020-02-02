@@ -10,9 +10,10 @@ import (
 const port = ":8000"
 
 func main() {
-	router := mux.NewRouter()
 	tags := GetTagsStorage("./githubstars.db")
-	AddRoutes(router, tags)
+	githubClient := GetGithubClient("7d78b293e54d870a1b320190b0afff72e4db65f8")
+	router := mux.NewRouter()
+	AddRoutes(router, tags, githubClient)
 	AddMiddlewares(router)
 	fmt.Println("Listening on", port, "...")
 	log.Fatal(http.ListenAndServe(port, router))

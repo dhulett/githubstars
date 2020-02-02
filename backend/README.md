@@ -29,7 +29,7 @@ Requires:
 
 Execute following commands to run the application
 ```shell
-$ docker run -v ./app/:/go/githubstars -p 8000:8000 --rm -it $(docker build -q .)
+$ docker run -v githubstars:/go/githubstars -p 8000:8000 --rm -it $(docker build -q .)
 ```
 
 ## Built With

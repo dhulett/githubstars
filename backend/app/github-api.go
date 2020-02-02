@@ -8,6 +8,21 @@ import (
 
 const githubGraphQL = "https://api.github.com/graphql"
 
+// GithubGraphQLClient handles requests to the Github v4 GraphQL API
+type GithubGraphQLClient struct {
+	client *graphql.Client
+	auth string
+}
+
+// GetGithubClient returns a Github API client
+func GetGithubClient(authorization string) *GithubGraphQLClient {
+	client := &GithubGraphQLClient{
+			client: graphql.NewClient(githubGraphQL),
+			auth: authorization,
+		}
+	return client
+}
+
 // GithubRepository holds information about a starred repository
 type GithubRepository struct {
 	ID          string
@@ -36,14 +51,12 @@ type apiResponse struct {
 }
 
 // GetUserStarredRepos returns all the starred repos for the user
-func GetUserStarredRepos(user string, maxRepos int) []GithubRepository {
-	client := graphql.NewClient(githubGraphQL)
-
+func (github *GithubGraphQLClient) GetUserStarredRepos(user string, maxRepos int) []GithubRepository {
 	req := getStarredReposRequest(user, maxRepos, 1)
-	req.Header.Add("Authorization", "Bearer 03b8cd62c73d8acad36e6a5f7ba5bc8c907c2eb7")
+	req.Header.Add("Authorization", github.getAuthorizationHeader())
 	ctx := context.Background()
 	var res apiResponse
-	if err := client.Run(ctx, req, &res); err != nil {
+	if err := github.client.Run(ctx, req, &res); err != nil {
 		log.Fatal(err)
 	}
 	return res.User.StarredRepositories.Nodes
@@ -58,17 +71,19 @@ type apiCountResponse struct {
 }
 
 // GetUserStarredReposCount returns the number of repos starred by the user
-func GetUserStarredReposCount(user string) int {
-	client := graphql.NewClient(githubGraphQL)
-
+func (github *GithubGraphQLClient) GetUserStarredReposCount(user string) int {
 	req := getStarredReposCountRequest(user)
-	req.Header.Add("Authorization", "Bearer 03b8cd62c73d8acad36e6a5f7ba5bc8c907c2eb7")
+	req.Header.Add("Authorization", github.getAuthorizationHeader())
 	ctx := context.Background()
 	var res apiCountResponse
-	if err := client.Run(ctx, req, &res); err != nil {
+	if err := github.client.Run(ctx, req, &res); err != nil {
 		log.Fatal(err)
 	}
 	return res.User.StarredRepositories.TotalCount
+}
+
+func (github *GithubGraphQLClient) getAuthorizationHeader() string {
+	return "Bearer " + github.auth
 }
 
 func getStarredReposCountRequest(user string) *graphql.Request {

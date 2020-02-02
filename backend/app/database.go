@@ -31,10 +31,10 @@ func (t *TagsStorage) GetAllTags() []string {
 }
 
 // GetRepoID retrieves from the database the mapped ID for the repository (inserts if non existing)
-func (t *TagsStorage) GetRepoID(repoID string) int64 {
-	result, err := t.db.Exec("INSERT INTO repos (githubID) VALUES (?)", repoID)
+func (t *TagsStorage) GetRepoID(githubID string) int64 {
+	result, err := t.db.Exec("INSERT INTO repos (githubID) VALUES (?)", githubID)
 	if err != nil {
-		row := t.db.QueryRow("SELECT id FROM repos WHERE githubID LIKE ?", repoID)
+		row := t.db.QueryRow("SELECT id FROM repos WHERE githubID LIKE ?", githubID)
 		var id int64
 		err = row.Scan(&id)
 		if err != nil {
@@ -47,9 +47,21 @@ func (t *TagsStorage) GetRepoID(repoID string) int64 {
 	return id
 }
 
+// GetRepoGithubID retrieves from the database the githubID of the repo
+func (t *TagsStorage) GetRepoGithubID(repoID int64) string {
+	row := t.db.QueryRow("SELECT githubID FROM repos WHERE id = ?", repoID)
+	var githubID string
+	err := row.Scan(&githubID)
+	if err != nil {
+		fmt.Println(err)
+		return ""
+	}
+	return githubID
+}
+
 // GetRepoTags retrieves from the database all tags of a specific repository
 func (t *TagsStorage) GetRepoTags(repoID int64) []string {
-	tags, err := t.db.Query("SELECT t.tag FROM taggedRepos AS tr LEFT JOIN tags AS t ON t.id = tr.tagID WHERE repoID = ?", repoID)
+	tags, err := t.db.Query("SELECT t.tag FROM taggedRepos AS tr INNER JOIN tags AS t ON t.id = tr.tagID WHERE repoID = ?", repoID)
 	if err != nil {
 		fmt.Println(err)
 		return []string{}

@@ -9,24 +9,26 @@ import (
 )
 
 // AddRoutes configures the routes handlers in the router
-func AddRoutes(router *mux.Router, t *TagsStorage) {
+func AddRoutes(router *mux.Router, t *TagsStorage, g *GithubGraphQLClient) {
 
-	h := &handler{tags: t}
+	h := &handler{tags: t, github: g}
 
 	router.HandleFunc("/", h.sendBasicInfo).Methods("GET")
 	router.HandleFunc("/tags", h.getAllExistingTags).Methods("GET")
 	router.HandleFunc("/tags/{tag}", h.deleteTagFromAllRepositories).Methods("DELETE")
-	router.HandleFunc("/{user}/tags/{tag}", h.getAllRepositoriesWithMatchingTag).Methods("GET")
+	router.HandleFunc("/tags/{tag}/{user}", h.getAllRepositoriesWithMatchingTag).Methods("GET")
 	router.HandleFunc("/{user}/repos", h.getAllUserStarredRepositoriesAndTags).Methods("GET")
-	router.HandleFunc("/{user}/repos/{repo}", h.getRepositoryTags).Methods("GET")
-	router.HandleFunc("/{user}/repos/{repo}", h.updateRepositoryTags).Methods("PUT")
-	router.HandleFunc("/{user}/repos/{repo}", h.clearRepositoryTags).Methods("DELETE")
+	router.HandleFunc("/{user}/repos/{repo}", h.getStarredRepoDetails).Methods("GET")
 	router.HandleFunc("/{user}/repos/{repo}/tags", h.addRepositoryTag).Methods("POST")
+	router.HandleFunc("/{user}/repos/{repo}/tags", h.getRepositoryTags).Methods("GET")
+	router.HandleFunc("/{user}/repos/{repo}/tags", h.updateRepositoryTags).Methods("PUT")
+	router.HandleFunc("/{user}/repos/{repo}/tags", h.clearRepositoryTags).Methods("DELETE")
 	router.HandleFunc("/{user}/repos/{repo}/tags/{tag}", h.removeRepositoryTag).Methods("DELETE")
 }
 
 type handler struct {
 	tags *TagsStorage
+	github *GithubGraphQLClient
 }
 
 type repositoryWithTags struct {
@@ -34,20 +36,24 @@ type repositoryWithTags struct {
 	GithubID      string
 	Name          string
 	Description   string
-	Owner		  string
+	Owner         string
 	URL           string
-	Language      []string
+	Languages     []string
 	Tags          []string
 	SuggestedTags []string
 }
 
 func (h *handler) sendBasicInfo(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *handler) getAllExistingTags(w http.ResponseWriter, r *http.Request) {
 	allTags := h.tags.GetAllTags()
-	json.NewEncoder(w).Encode(allTags)
+	if len(allTags) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	json.NewEncoder(w).Encode(&allTags)
 }
 
 func (h *handler) getAllRepositoriesWithMatchingTag(w http.ResponseWriter, r *http.Request) {
@@ -55,8 +61,8 @@ func (h *handler) getAllRepositoriesWithMatchingTag(w http.ResponseWriter, r *ht
 	tag := params["tag"]
 	user := params["user"]
 
-	maxRepos := GetUserStarredReposCount(user)
-	repositories := GetUserStarredRepos(user, maxRepos)
+	maxRepos := h.github.GetUserStarredReposCount(user)
+	repositories := h.github.GetUserStarredRepos(user, maxRepos)
 	repos := h.tags.GetReposByTagPattern(tag)
 	var filteredRepos []GithubRepository
 	for _, starredRepo := range repositories {
@@ -66,7 +72,11 @@ func (h *handler) getAllRepositoriesWithMatchingTag(w http.ResponseWriter, r *ht
 		filteredRepos = append(filteredRepos, starredRepo)
 	}
 	reposWithTags := getReposWithTags(filteredRepos, h.tags)
-	json.NewEncoder(w).Encode(reposWithTags)
+	if reposWithTags == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	json.NewEncoder(w).Encode(&reposWithTags)
 }
 
 func (h *handler) deleteTagFromAllRepositories(w http.ResponseWriter, r *http.Request) {
@@ -74,24 +84,20 @@ func (h *handler) deleteTagFromAllRepositories(w http.ResponseWriter, r *http.Re
 	tag := params["tag"]
 
 	h.tags.DeleteTag(tag)
-}
 
-func getReposWithTags(repositories []GithubRepository, tags *TagsStorage) []repositoryWithTags {
-	var reposWithTags []repositoryWithTags
-	for _, starredRepo := range repositories {
-		repoWithTags := getRepositoryWithTags(starredRepo, tags)
-		repoWithTags.SuggestedTags = suggestTags(starredRepo, repoWithTags.Tags, tags)
-		reposWithTags = append(reposWithTags, repoWithTags)
-	}
-	return reposWithTags
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *handler) getAllUserStarredRepositoriesAndTags(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	user := params["user"]
-	maxRepos := GetUserStarredReposCount(user)
-	repositories := GetUserStarredRepos(user, maxRepos)
+	maxRepos := h.github.GetUserStarredReposCount(user)
+	repositories := h.github.GetUserStarredRepos(user, maxRepos)
 	reposWithTags := getReposWithTags(repositories, h.tags)
+	if reposWithTags == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 	json.NewEncoder(w).Encode(&reposWithTags)
 }
 
@@ -100,13 +106,43 @@ func (h *handler) getRepositoryTags(w http.ResponseWriter, r *http.Request) {
 	repo, err := strconv.ParseInt(params["repo"], 10, 64)
 
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	tags := h.tags.GetRepoTags(repo)
-
+	if tags == nil {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
 	json.NewEncoder(w).Encode(&tags)
+}
+
+func (h *handler) getStarredRepoDetails(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	user := params["user"]
+	repo, err := strconv.ParseInt(params["repo"], 10, 64)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	githubID := h.tags.GetRepoGithubID(repo)
+
+	if githubID != "" {
+		maxRepos := h.github.GetUserStarredReposCount(user)
+		repositories := h.github.GetUserStarredRepos(user, maxRepos)
+		for _, githubRepo := range repositories {
+			if githubRepo.ID == githubID {
+				repoWithTags := getRepositoryWithTags(githubRepo, h.tags)
+				json.NewEncoder(w).Encode(repoWithTags)
+				return
+			}
+		}
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *handler) updateRepositoryTags(w http.ResponseWriter, r *http.Request) {
@@ -114,7 +150,7 @@ func (h *handler) updateRepositoryTags(w http.ResponseWriter, r *http.Request) {
 	repo, err := strconv.ParseInt(params["repo"], 10, 64)
 
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -136,7 +172,7 @@ func (h *handler) clearRepositoryTags(w http.ResponseWriter, r *http.Request) {
 	repo, err := strconv.ParseInt(params["repo"], 10, 64)
 
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
@@ -148,28 +184,25 @@ func (h *handler) addRepositoryTag(w http.ResponseWriter, r *http.Request) {
 	repo, err := strconv.ParseInt(params["repo"], 10, 64)
 
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	tag, _ := ioutil.ReadAll(r.Body)
 	h.tags.AddRepoTag(repo, string(tag))
-
 	w.WriteHeader(http.StatusCreated)
 }
 
 func (h *handler) removeRepositoryTag(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	repo, err := strconv.ParseInt(params["repo"], 10, 64)
-
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	tag, _ := ioutil.ReadAll(r.Body)
-
+	tag := params["tag"]
 	h.tags.RemoveRepoTag(repo, string(tag))
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func suggestTags(githubRepo GithubRepository, repoTags []string, tagsStorage *TagsStorage) []string {
@@ -202,6 +235,15 @@ func convertLanguages(githubRepo GithubRepository) []string {
 	return langs
 }
 
+func getReposWithTags(repositories []GithubRepository, tags *TagsStorage) []repositoryWithTags {
+	var reposWithTags []repositoryWithTags
+	for _, githubRepo := range repositories {
+		repoWithTags := getRepositoryWithTags(githubRepo, tags)
+		reposWithTags = append(reposWithTags, repoWithTags)
+	}
+	return reposWithTags
+}
+
 func getRepositoryWithTags(githubRepo GithubRepository, tags *TagsStorage) repositoryWithTags {
 	var repoWithTags repositoryWithTags
 	repoWithTags.ID = tags.GetRepoID(githubRepo.ID)
@@ -210,8 +252,9 @@ func getRepositoryWithTags(githubRepo GithubRepository, tags *TagsStorage) repos
 	repoWithTags.Owner = githubRepo.Owner.Login
 	repoWithTags.Description = githubRepo.Description
 	repoWithTags.URL = githubRepo.URL
-	repoWithTags.Language = convertLanguages(githubRepo)
+	repoWithTags.Languages = convertLanguages(githubRepo)
 	repoWithTags.Tags = tags.GetRepoTags(repoWithTags.ID)
+	repoWithTags.SuggestedTags = suggestTags(githubRepo, repoWithTags.Tags, tags)
 	return repoWithTags
 }
 
