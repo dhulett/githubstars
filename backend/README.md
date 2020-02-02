@@ -8,22 +8,26 @@ A server that exposes a REST API to allow the user to fetch information about re
 
 ## Getting Started
 
-### Prerequisites
+### Run with Go:
 
+Requires:
 + [Go](https://golang.org/) version 1.13 or above (Go Modules)
 + GCC Compiler referenced in the environent %PTH% (to build sqlite3 driver dependency)
 
-or
-
-+ [Docker](https://www.docker.com/)
-
-### Run with Go:
+Execute following commands to run the application
 ```shell
 $ cd ./app
 $ go run .
 ```
 
+### or
+
 ### Run with docker:
+
+Requires:
++ [Docker](https://www.docker.com/)
+
+Execute following commands to run the application
 ```shell
 $ docker run -v ./app/:/go/githubstars -p 8000:8000 --rm -it $(docker build -q .)
 ```
@@ -35,7 +39,3 @@ $ docker run -v ./app/:/go/githubstars -p 8000:8000 --rm -it $(docker build -q .
 ## Authors
 
 * **Deon Hulett** - [dhulett](https://github.com/dhulett)
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details

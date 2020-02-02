@@ -9,10 +9,6 @@ FORMAT: 1A
 
 + Response 200 (application/json)
 
-        {
-            "url": "/repo"
-        }
-
 ## Group Repos
 
 ## Repo [/repos/{id}]
@@ -29,8 +25,9 @@ FORMAT: 1A
 [GET]
 # [/{user}/repos/{repo}]
 [GET]
-# [/{user}/repos/{repo}/tags]
-[GET]
 [PUT]
-# [/{user}/repos/{repo}/tags/{tag}]
+[DELETE]
+# [/{user}/repos/{repo}/tags]
 [POST]
+# [/{user}/repos/{repo}/tags/{tag}]
+[DELETE]
