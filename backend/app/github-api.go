@@ -15,10 +15,10 @@ type GithubGraphQLClient struct {
 }
 
 // GetGithubClient returns a Github API client
-func GetGithubClient(authorization string) *GithubGraphQLClient {
+func GetGithubClient() *GithubGraphQLClient {
 	client := &GithubGraphQLClient{
 			client: graphql.NewClient(githubGraphQL),
-			auth: authorization,
+			auth: "",
 		}
 	return client
 }

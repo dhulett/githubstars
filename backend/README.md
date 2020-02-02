@@ -6,6 +6,10 @@ A server that exposes a REST API to allow the user to fetch information about re
 - The data is stored in a local SQLite database.
 - The user starred repositories information is fetched from the GitHub server using the GitHub v4 API (GraphQL)
 
+# Prerequisites
+
+- The Github GraphQL API requires an [authorization token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line). The token must be provided in the requests' "Authorization" header.
+
 ## Getting Started
 
 ### Run with Go:

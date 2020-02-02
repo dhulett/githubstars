@@ -43,6 +43,10 @@ Resources related to Tags in the API
 
 #### Search repositories by tag [GET]
 
++ Headers
+
+    Authorization: token
+
 + Response 200 (application/json)
 
         [
@@ -93,6 +97,10 @@ A Repo object represents a Github repository and has the following attributes:
 
 #### Get Repo details [GET]
 
++ Headers
+
+    Authorization: token
+
 + Response 200 (application/json)
 
         {
@@ -126,6 +134,10 @@ A Repo object represents a Github repository and has the following attributes:
     + user: username (required, string) - Username of the Github user
 
 #### List all user starred Repos [GET]
+
++ Headers
+
+    Authorization: token
 
 + Response 200 (application/json)
 
@@ -175,7 +187,7 @@ A Repo object represents a Github repository and has the following attributes:
 
 + Response 400 (application/json)
 
-#### Update Repo Tags [PATCH]
+#### Update Repo Tags [PUT]
 
 + Request
 

@@ -7,8 +7,12 @@ import (
 )
 
 // AddMiddlewares configures the middlewares in the router
-func AddMiddlewares(router *mux.Router) {
+func AddMiddlewares(router *mux.Router, ghClient *GithubGraphQLClient) {
 	router.Use(logURLMiddleware)
+	router.Use(headerMiddleware)
+
+	ghAuth := &githubAuth{githubClient: ghClient}
+	router.Use(ghAuth.githubAuthMiddleware)
 }
 
 func logURLMiddleware(h http.Handler) http.Handler {
@@ -20,9 +24,18 @@ func logURLMiddleware(h http.Handler) http.Handler {
 
 func headerMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("accept", "application/json")
 		w.Header().Add("content-type", "application/json")
-		w.WriteHeader(http.StatusOK)
+		h.ServeHTTP(w, r)
+	})
+}
+
+type githubAuth struct {
+	githubClient *GithubGraphQLClient
+}
+
+func (ga *githubAuth) githubAuthMiddleware(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ga.githubClient.auth = r.Header.Get("authorization")
 		h.ServeHTTP(w, r)
 	})
 }
