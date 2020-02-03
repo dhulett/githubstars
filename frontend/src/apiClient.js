@@ -30,16 +30,15 @@ const APIClient = {
 
     async perform(method, resource, data) {
         let accessToken = await Vue.prototype.$auth.getAccessToken()
-        return client({
+        let req = await client({
             method,
             url: resource,
             data,
             headers: {
                 Authorization: `Bearer ${accessToken}`
             }
-        }).then(req => {
-            return req.data
         })
+        return req.data
     }
 }
 

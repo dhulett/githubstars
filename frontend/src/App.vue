@@ -1,18 +1,21 @@
 <template>
  <v-app>
-   <router-view></router-view>
+   <Header/>
+   <router-view/>
  </v-app>
 </template>
 
 <script>
-import Loading from './components/Loading'
+import Header from "./components/Header"
 
 export default {
- name: 'App',
- components: { Loading },
- data() {
-   return {}
- }
+  name: 'App',
+  components: {
+    Header
+  },
+  data() {
+    return {}
+  },
 }
 </script>
 

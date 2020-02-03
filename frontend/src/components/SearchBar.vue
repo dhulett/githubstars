@@ -1,17 +1,14 @@
 <template>
     <v-toolbar dark color="teal">
-      <v-spacer></v-spacer>
       <v-text-field
         solo-inverted
         flat
         hide-details
-        label="Search for your OOS project on Github + Press Enter"
+        label="search by tag"
         prepend-inner-icon="search"
         v-model="query"
         @keyup.enter="onSearchSubmition"
       ></v-text-field>
-      <v-spacer></v-spacer>
-      <button @click.prevent="logout">Logout</button>
     </v-toolbar>
 </template>
 

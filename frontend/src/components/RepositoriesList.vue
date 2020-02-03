@@ -1,46 +1,53 @@
 <template>
-  <v-card >
-    <v-card-title primary-title>
-      <div class="repo-card-content">
-        <h3 class="headline mb-0">
-          <router-link :to="{ name: 'repo-details', params: { id: repo.id }}" >{{repo.full_name}}</router-link>
-        </h3>
-        <div>{{repo.description}}</div>
-      </div>
-    </v-card-title>
-    <v-card-actions>
-      <v-chip>
-        {{repo.language}}
-      </v-chip>
-      <v-spacer></v-spacer>
-      <v-btn @click.prevent="toggleKudo(repo)"  flat icon color="pink">
-        <v-icon v-if="isKudo(repo)">favorite</v-icon>
-        <v-icon v-else>favorite_border</v-icon>
-      </v-btn>
-    </v-card-actions>
-  </v-card>
+  <div>
+    <SearchBar defaultQuery="" v-on:search-submitted="githubQuery" />
+    <table>
+      <th>
+        <td v-for="header in tableHeader" v-bind:key="header">{{header}}</td>
+      </th>
+      <tr v-for="repo in repositories" v-bind:key="repo.ID">
+        <td><a href="repo.URL">{{repo.Name}}</a></td>
+        <td>{{repo.Description}}</td>
+        <td>{{getLanguanges(repo.Languages)}}</td>
+        <td>{{getTagsDisplay(repo.Tags)}}</td>
+        <td>edit</td>
+      </tr>
+    </table>
+  </div>
 </template>
 
 <script>
-import { mapActions } from 'vuex';
+import SearchBar from './SearchBar.vue'
+import githubClient from '../githubClient'
+import { mapMutations, mapGetters, mapActions } from 'vuex'
 
 export default {
+  name: 'Home',
+  components: { SearchBar },
   data() {
-    return {}
+    return {
+      tableHeader: ['Repository', 'Description', 'Language', 'Tags', ''],
+      repositories: []
+    }
   },
-  props: ['repo'],
+  computed: mapGetters(['allTags', 'repos']),
+  created() {
+    this.getTags();
+  },
   methods: {
-    isKudo(repo) {
-      return this.$store.getters.isKudo(repo);
+    githubQuery(query) {
+      githubClient
+        .getJSONRepos(query)
+        .then(response => this.resetRepos(response.items) )
     },
-    ...mapActions(['toggleKudo'])
-  }
+    ...mapMutations(['resetRepos']),
+    ...mapActions(['getTags']),
+    selectedUser() {
+
+    }
+  },
 }
 </script>
 
 <style>
- .repo-card-content {
-   height: 90px;
-   overflow: scroll;
- }
 </style>

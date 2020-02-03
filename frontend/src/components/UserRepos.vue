@@ -1,54 +1,28 @@
 <template>
   <div>
-    <SearchBar defaultQuery='okta' v-on:search-submitted="githubQuery" />
-    <v-container grid-list-md fluid class="grey lighten-4" >
-         <v-tabs
-        slot="extension"
-        v-model="tabs"
-        centered
-        color="teal"
-        text-color="white"
-        slider-color="white"
-      >
-        <v-tab class="white--text" :key="2">
-          Tags
-        </v-tab>
-        <v-tab class="white--text" :key="1">
-          Search
-        </v-tab>
-      </v-tabs>
-        <v-tabs-items style="width:100%" v-model="tabs">
-          <v-tab-item :key="2">
-            <v-layout row wrap>
-              <v-flex v-for="repo in allRepos" :key="repo.id" md4 >
-                <RepositoriesList :repo="repo" />
-              </v-flex>
-            </v-layout>
-          </v-tab-item>
-          <v-tab-item :key="1">
-            <v-layout row wrap>
-              <v-flex v-for="repo in repos" :key="repo.id" md4>
-                <RepositoriesList :repo="repo" />
-              </v-flex>
-            </v-layout>
-          </v-tab-item>
-        </v-tabs-items>
-    </v-container>
+    <div >
+      <SearchBar defaultQuery="selectedUser" v-on:search-submitted="githubQuery" />
+      <RepositoriesList />
+    </div>
+    <div>
+      <Loading />
+    </div>
   </div>
 </template>
 
 <script>
 import SearchBar from './SearchBar'
 import RepositoriesList from './RepositoriesList'
+import Loading from './Loading'
 import githubClient from '../githubClient'
 import { mapMutations, mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'Home',
-  components: { SearchBar, RepositoriesList },
+  components: { SearchBar, RepositoriesList, Loading },
   data() {
     return {
-      tabs: 0
+      showLoading: true
     }
   },
   computed: mapGetters(['allRepos', 'repos']),
@@ -57,19 +31,22 @@ export default {
   },
   methods: {
     githubQuery(query) {
-      this.tabs = 1;
+      this.showLoading = true
       githubClient
         .getJSONRepos(query)
-        .then(response => this.resetRepos(response.items) )
+        .then(response => {
+          this.showLoading = false
+          this.resetRepos(response.items)
+        })
     },
     ...mapMutations(['resetRepos']),
     ...mapActions(['getKudos']),
+    selectedUser() {
+      return this.user()
+    }
   },
 }
 </script>
 
 <style>
- .v-tabs__content {
-   padding-bottom: 2px;
- }
 </style>
