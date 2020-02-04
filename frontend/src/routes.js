@@ -15,11 +15,11 @@ export default new VueRouter({
             component: SelectUser
         },
         {
-            path: '/user/:user',
+            path: '/:user/repos',
             component: UserRepos
         },
         {
-            path: '/user/:user/repo/:repo',
+            path: '/:user/repos/:repo/tags',
             component: EditTags
         }
     ]

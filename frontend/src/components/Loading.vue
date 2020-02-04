@@ -2,7 +2,7 @@
 <div>
     <div></div>
     <div>{{loadingText}}</div>
-<div>
+</div>
 </template>
 
 <script>

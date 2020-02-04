@@ -1,19 +1,27 @@
 <template>
-  <div></div>
+<div>
+
+  <form>
+    https://github.com/
+    <input type="text" v-model="user" placeholder="username" @keyup.enter="requestAuthToken"/>
+    <button onclick="requestAuthToken">get repositories</button>
+  </form>
+</div>
 </template>
 
 <script>
 export default {
   data() {
-    return {};
+    return {
+      user: ""
+    };
   },
   async mounted() {
-    const isAuthenticated = await this.$auth.isAuthenticated();
-    isAuthenticated && this.$router.push('/me');
-  },
+    },
   methods: {
-    login () {
-      this.$auth.loginRedirect('/me')
+    requestAuthToken () {
+      // Check if user is authenticated with github and get authentication token
+     this.$router.push(`/${this.user}/repos`);
     }
   }
 }

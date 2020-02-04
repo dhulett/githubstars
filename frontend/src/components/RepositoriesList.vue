@@ -1,6 +1,6 @@
 <template>
   <div>
-    <SearchBar defaultQuery="" v-on:search-submitted="githubQuery" />
+    <SearchBar v-on:search-submitted="githubQuery" />
     <table>
       <th>
         <td v-for="header in tableHeader" v-bind:key="header">{{header}}</td>
@@ -27,7 +27,24 @@ export default {
   data() {
     return {
       tableHeader: ['Repository', 'Description', 'Language', 'Tags', ''],
-      repositories: []
+      repositories: [
+        {
+          ID: "1",
+          Name: "placeholderRepo1",
+          URL: "https://github.com",
+          Description: "Just one placeholder",
+          Languages: ['lang1', 'lang2'],
+          Tags: ['tag1', 'tag2']
+        },
+        {
+          ID: "2",
+          Name: "placeholderRepo1",
+          URL: "https://github.com",
+          Description: "Just one placeholder",
+          Languages: ['lang1', 'lang2'],
+          Tags: ['tag1', 'tag2']
+        }
+      ]
     }
   },
   computed: mapGetters(['allTags', 'repos']),
@@ -44,10 +61,31 @@ export default {
     ...mapActions(['getTags']),
     selectedUser() {
 
+    },
+    getLanguanges(languages) {
+      return languages
+    },
+    getTagsDisplay(tags) {
+      return tags
     }
   },
 }
 </script>
 
-<style>
+<style scoped>
+table {
+  font-family: arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+td, th {
+  border: 1px solid #dddddd;
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #dddddd;
+}
 </style>

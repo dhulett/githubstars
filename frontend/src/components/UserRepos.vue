@@ -1,17 +1,11 @@
 <template>
   <div>
-    <div >
-      <SearchBar defaultQuery="selectedUser" v-on:search-submitted="githubQuery" />
-      <RepositoriesList />
-    </div>
-    <div>
-      <Loading />
-    </div>
+    <Loading v-if="loading"/>
+    <RepositoriesList v-else/>
   </div>
 </template>
 
 <script>
-import SearchBar from './SearchBar'
 import RepositoriesList from './RepositoriesList'
 import Loading from './Loading'
 import githubClient from '../githubClient'
@@ -19,10 +13,10 @@ import { mapMutations, mapGetters, mapActions } from 'vuex'
 
 export default {
   name: 'Home',
-  components: { SearchBar, RepositoriesList, Loading },
+  components: { RepositoriesList, Loading },
   data() {
     return {
-      showLoading: true
+      loading: true
     }
   },
   computed: mapGetters(['allRepos', 'repos']),
@@ -30,19 +24,16 @@ export default {
     this.getKudos();
   },
   methods: {
-    githubQuery(query) {
-      this.showLoading = true
-      githubClient
-        .getJSONRepos(query)
-        .then(response => {
-          this.showLoading = false
-          this.resetRepos(response.items)
-        })
+    async githubQuery(query) {
+      this.loading = true
+      let response = await githubClient.getJSONRepos(query)
+      this.loading = false
+      this.resetRepos(response.items)
     },
     ...mapMutations(['resetRepos']),
     ...mapActions(['getKudos']),
     selectedUser() {
-      return this.user()
+      return this.user
     }
   },
 }

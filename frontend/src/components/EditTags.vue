@@ -20,7 +20,7 @@ export default {
   },
   methods: {
     async fetchData() {
-      const response = await fetch('https://api.github.com/repositories/' + this.$route.params.id);
+      const response = await fetch(`https://api.github.com/repositories/${this.$route.params.id}`);
       const responseJson = await response.json();
       Object.assign(responseJson, this.kudos[this.$route.params.id])
     },

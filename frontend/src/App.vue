@@ -1,6 +1,6 @@
 <template>
  <v-app>
-   <Header/>
+   <Header applicationTitle="githubstars" homeButtonTitle="home"/>
    <router-view/>
  </v-app>
 </template>
@@ -15,7 +15,7 @@ export default {
   },
   data() {
     return {}
-  },
+  }
 }
 </script>
 
