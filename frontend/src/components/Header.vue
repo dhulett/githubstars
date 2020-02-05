@@ -1,40 +1,46 @@
 <template>
-<div>
-    <div class="title"> {{ applicationTitle }} </div>
-    <div class="home" v-if="displayHomeButton"><router-link to="/">{{ homeButtonTitle }}</router-link> </div>
-</div>
+	<div class="header-container">
+		<div class="title">{{ applicationTitle }}</div>
+		<div class="home" v-if="displayHomeButton">
+			<router-link to="/">{{ homeButtonTitle }}</router-link>
+		</div>
+	</div>
 </template>
 
 <script>
 export default {
-    data() {
-        return {
-            displayHomeButton: false
-        }
-    },
-    beforeRouteUpdate(to, from, next) {
-        this.displayHomeButton = to == '/'
-        next()
-    },
-    props: {
-        applicationTitle: String,
-        homeButtonTitle: String,
-    }
-}
+	data() {
+		return {
+			displayHomeButton: true
+		};
+	},
+	beforeRouteUpdate(to, from, next) {
+        this.displayHomeButton = to != "/";
+		next();
+	},
+	props: {
+		applicationTitle: String,
+		homeButtonTitle: String
+	}
+};
 </script>
 
 <style scoped>
 div {
-    position: relative;
-    display: flex;
+	position: relative;
+	display: block;
+}
+
+.header-container {
+    width: 100%;
+    height: 50px;
 }
 
 .title {
-    float: left;
+	float: left;
 }
 
 .home {
-    float: right;
+	float: right;
 }
-
 </style>

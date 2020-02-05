@@ -1,92 +1,56 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-
-import APIClient from './apiClient';
+import githubClient from './githubClient.js'
 
 Vue.use(Vuex);
 
 const store = new Vuex.Store({
     state: {
-        kudos: {},
-        repos: [],
+        repos: {},
+        tags: {}
     },
     mutations: {
         resetRepos(state, repos) {
             state.repos = repos;
         },
-        resetKudos(state, kudos) {
+        resetTags(state, kudos) {
             state.kudos = kudos;
         }
     },
     getters: {
-        allKudos(state) {
-            return Object.values(state.kudos);
+        allTags(state) {
+            return Object.values(state.tags);
         },
-        kudos(state) {
+        tags(state) {
             return state.kudos;
         },
         repos(state) {
             return state.repos;
-        },
-        isKudo(state) {
-            return (repo) => {
-                return !!state.kudos[repo.id];
-            };
         }
     },
     actions: {
-        getKudos({
+        async getRepos({
             commit
         }) {
-            APIClient.getKudos().then((data) => {
-                commit('resetKudos', data.reduce((acc, kudo) => {
-                    return {
-                        [kudo.id]: kudo,
-                        ...acc
-                    }
-                }, {}))
-            })
+            const starredRepos = await githubClient.getUserStarredRepos()
+
+            commit('resetRepos', starredRepos)
         },
-        updateKudo({
-            commit,
-            state
-        }, repo) {
-            const kudos = {
-                ...state.kudos,
-                [repo.id]: repo
-            };
+        // setTags({ commit, state }, repoId, tags) {
+        //     commit('setTags', { repoId, })
+        // },
+        // addTag({ commit, state }, repoId, tag) {
+        //     kudo => commit('resetKudos', { [kudo.id]: kudo, ...state.kudos })
+        // },
+        // removeTag({ commit, state }, repoId, tag) {
 
-            return APIClient
-                .updateKudo(repo)
-                .then(() => {
-                    commit('resetKudos', kudos)
-                });
-        },
-        toggleKudo({
-            commit,
-            state
-        }, repo) {
-            if (!state.kudos[repo.id]) {
-                return APIClient
-                    .createKudo(repo)
-                    .then(kudo => commit('resetKudos', {
-                        [kudo.id]: kudo,
-                        ...state.kudos
-                    }))
-            }
+        //     const kudos = Object.entries(state.kudos).reduce((acc, [repoId, kudo]) => {
+        //         return (repoId == repo.id) ? acc
+        //             : { [repoId]: kudo, ...acc };
+        //     }, {})
 
-            const kudos = Object.entries(state.kudos).reduce((acc, [repoId, kudo]) => {
-                return (repoId == repo.id) ? acc :
-                    {
-                        [repoId]: kudo,
-                        ...acc
-                    };
-            }, {});
-
-            return APIClient
-                .deleteKudo(repo)
-                .then(() => commit('resetKudos', kudos));
-        }
+        //     commit('resetKudos', kudos)
+        // }
     }
 });
 

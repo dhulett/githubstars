@@ -1,43 +1,39 @@
 <template>
   <div>
-    <Loading v-if="loading"/>
-    <RepositoriesList v-else/>
+    <SearchBar v-on:searchSubmitted="filterTag($event)" />
+    <Loading v-if="loading" />
+    <RepositoriesList v-else v-bind:repositories="fetchData()" />
+    <EditTags v-if="showTagEditingModal" />
   </div>
 </template>
 
 <script>
-import RepositoriesList from './RepositoriesList'
-import Loading from './Loading'
-import githubClient from '../githubClient'
-import { mapMutations, mapGetters, mapActions } from 'vuex'
+import SearchBar from "./SearchBar";
+import RepositoriesList from "./RepositoriesList";
+import Loading from "./Loading";
+import EditTags from "./EditTags";
+import githubClient from "../githubClient";
 
 export default {
-  name: 'Home',
-  components: { RepositoriesList, Loading },
+  components: { SearchBar, RepositoriesList, Loading, EditTags },
   data() {
     return {
-      loading: true
-    }
+      loading: true,
+      showTagEditingModal: false
+    };
   },
-  computed: mapGetters(['allRepos', 'repos']),
   created() {
-    this.getKudos();
+    this.fetchData();
   },
   methods: {
-    async githubQuery(query) {
-      this.loading = true
-      let response = await githubClient.getJSONRepos(query)
-      this.loading = false
-      this.resetRepos(response.items)
-    },
-    ...mapMutations(['resetRepos']),
-    ...mapActions(['getKudos']),
-    selectedUser() {
-      return this.user
+    async fetchData() {
+      this.loading = true;
+      let repos = await githubClient.getUserStarredRepos();
+      this.loading = false;
+      return repos;
     }
-  },
-}
+  }
+};
 </script>
 
-<style>
-</style>
+<style></style>
