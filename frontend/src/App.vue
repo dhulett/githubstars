@@ -1,10 +1,8 @@
 <template>
-  <v-app>
-    <div class="body">
-      <Header applicationTitle="githubstars" homeButtonTitle="home" />
-      <router-view />
-    </div>
-  </v-app>
+  <div class="body">
+    <Header applicationTitle="githubstars" homeButtonTitle="home" />
+    <router-view />
+  </div>
 </template>
 
 <script>
